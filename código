@@ -1,0 +1,107 @@
+using System;
+using System.Data;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient;
+
+namespace CadastroAlunos
+{
+    public partial class Form1 : Form
+    {
+        private string connectionString = "Server=localhost;Database=Escola;User ID=usuario;Password=senha;";
+        
+        public Form1()
+        {
+            InitializeComponent();
+            ListarAlunos();
+        }
+
+        private void btnCadastrar_Click(object sender, EventArgs e)
+        {
+            using (MySqlConnection conexao = new MySqlConnection(connectionString))
+            {
+                string sql = "INSERT INTO Alunos (Nome, DataNascimento, Curso, Telefone) VALUES (@Nome, @DataNascimento, @Curso, @Telefone)";
+                MySqlCommand comando = new MySqlCommand(sql, conexao);
+                comando.Parameters.AddWithValue("@Nome", txtNome.Text);
+                comando.Parameters.AddWithValue("@DataNascimento", dtpDataNascimento.Value);
+                comando.Parameters.AddWithValue("@Curso", txtCurso.Text);
+                comando.Parameters.AddWithValue("@Telefone", txtTelefone.Text);
+                
+                conexao.Open();
+                comando.ExecuteNonQuery();
+                MessageBox.Show("Aluno cadastrado com sucesso!");
+                LimparCampos();
+                ListarAlunos();
+            }
+        }
+
+        private void ListarAlunos()
+        {
+            using (MySqlConnection conexao = new MySqlConnection(connectionString))
+            {
+                string sql = "SELECT * FROM Alunos";
+                MySqlDataAdapter adapter = new MySqlDataAdapter(sql, conexao);
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
+                dataGridViewAlunos.DataSource = dt;
+            }
+        }
+
+        private void dataGridViewAlunos_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow row = this.dataGridViewAlunos.Rows[e.RowIndex];
+                txtNome.Text = row.Cells["Nome"].Value.ToString();
+                dtpDataNascimento.Value = Convert.ToDateTime(row.Cells["DataNascimento"].Value);
+                txtCurso.Text = row.Cells["Curso"].Value.ToString();
+                txtTelefone.Text = row.Cells["Telefone"].Value.ToString();
+            }
+        }
+
+        private void btnEditar_Click(object sender, EventArgs e)
+        {
+            using (MySqlConnection conexao = new MySqlConnection(connectionString))
+            {
+                string sql = "UPDATE Alunos SET Nome=@Nome, DataNascimento=@DataNascimento, Curso=@Curso, Telefone=@Telefone WHERE Id=@Id";
+                MySqlCommand comando = new MySqlCommand(sql, conexao);
+                comando.Parameters.AddWithValue("@Nome", txtNome.Text);
+                comando.Parameters.AddWithValue("@DataNascimento", dtpDataNascimento.Value);
+                comando.Parameters.AddWithValue("@Curso", txtCurso.Text);
+                comando.Parameters.AddWithValue("@Telefone", txtTelefone.Text);
+                comando.Parameters.AddWithValue("@Id", dataGridViewAlunos.SelectedRows[0].Cells["Id"].Value);
+                
+                conexao.Open();
+                comando.ExecuteNonQuery();
+                MessageBox.Show("Aluno atualizado com sucesso!");
+                LimparCampos();
+                ListarAlunos();
+            }
+        }
+
+        private void btnExcluir_Click(object sender, EventArgs e)
+        {
+            if (dataGridViewAlunos.SelectedRows.Count > 0)
+            {
+                using (MySqlConnection conexao = new MySqlConnection(connectionString))
+                {
+                    string sql = "DELETE FROM Alunos WHERE Id=@Id";
+                    MySqlCommand comando = new MySqlCommand(sql, conexao);
+                    comando.Parameters.AddWithValue("@Id", dataGridViewAlunos.SelectedRows[0].Cells["Id"].Value);
+                    
+                    conexao.Open();
+                    comando.ExecuteNonQuery();
+                    MessageBox.Show("Aluno excluído com sucesso!");
+                    ListarAlunos();
+                }
+            }
+        }
+
+        private void LimparCampos()
+        {
+            txtNome.Clear();
+            txtCurso.Clear();
+            txtTelefone.Clear();
+            dtpDataNascimento.Value = DateTime.Now;
+        }
+    }
+}
